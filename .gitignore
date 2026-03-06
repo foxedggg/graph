@@ -45,3 +45,6 @@
 
 # MAC
 *.DS_Store
+
+# Build dirs
+*/*build*

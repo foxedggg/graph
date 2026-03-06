@@ -2,7 +2,6 @@ from graph import Graph
 
 def main():
     graph = Graph()
-
     graph.load_graph('../../graph1m.txt')
     graph.remove_vertex(888888)
     graph.add_vertex(888888)
