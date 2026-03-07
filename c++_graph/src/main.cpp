@@ -1,4 +1,3 @@
-#include <iostream>
 #include <print>
 
 #include "graph.h"
@@ -17,9 +16,19 @@ int main() {
     if (!res3) {
         std::println("Error: {}", res3.error());
     }
-
-    for (VertexIterator it = graph.vertex_iterator_begin(); it != graph.vertex_iterator_end(); ++it) {
-        std::cout << " -> " << *it << "\n";
+    auto res4 = graph.add_vertex(3);
+    if (!res4) {
+        std::println("Error: {}", res4.error());
     }
+
+    int counter = 0;
+    for (VertexIterator it = graph.vertex_iterator_begin(); it != graph.vertex_iterator_end(); ++it) {
+        if (counter) {
+            std::print(" -> ");
+        }
+        std::print("{}", *it);
+        counter++;
+    }
+    std::println();
 
 }
