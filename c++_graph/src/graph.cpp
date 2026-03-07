@@ -42,6 +42,20 @@ size_t Graph::vertex_count() const {
     return vertex_ids.size();
 }
 
+std::expected<int, std::string> Graph::get_in_degree(int vertex_id) {
+    if (!in_edges.contains(vertex_id)) {
+        return std::unexpected("Invalid vertex id");
+    }
+    return in_edges[vertex_id].size();
+}
+
+std::expected<int, std::string> Graph::get_out_degree(int vertex_id) {
+    if (!out_edges.contains(vertex_id)) {
+        return std::unexpected("Invalid vertex id");
+    }
+    return out_edges[vertex_id].size();
+}
+
 VertexIterator Graph::vertex_iterator_begin() const {
     return VertexIterator(vertex_ids.cbegin());
 }
@@ -50,42 +64,44 @@ VertexIterator Graph::vertex_iterator_end() const {
     return VertexIterator(vertex_ids.cend());
 }
 
-int Graph::get_edge(int source_vertex_id, int target_vertex_id) {
-    auto source_it = out_edges.find(source_vertex_id);
-    if (source_it == out_edges.end()) {
-        throw std::invalid_argument("Source vertex " + std::to_string(source_vertex_id) + " does not exist.");
+std::expected<int, std::string> Graph::get_edge(int source_vertex_id, int target_vertex_id) {
+    if (!out_edges.contains(source_vertex_id)) {
+        return std::unexpected("Source vertex " + std::to_string(source_vertex_id) + " does not exist.");
     }
-    auto target_it = source_it->second.find(target_vertex_id);
-    if (target_it == source_it->second.end()) {
-        throw std::invalid_argument("Target vertex " + std::to_string(source_vertex_id) + " does not exist.");
+    if (!out_edges[source_vertex_id].contains(target_vertex_id)) {
+        return std::unexpected("Target vertex " + std::to_string(source_vertex_id) + " does not exist.");
     }
-
     return out_edges[source_vertex_id][target_vertex_id];
 }
 
-void Graph::add_vertex(int vertex_id) {
-    auto it = vertex_ids.find(vertex_id);
-    if (it != vertex_ids.end()) {
-        throw std::invalid_argument("Vertex " + std::to_string(vertex_id) + " already exists.");
+std::expected<Graph::end_points, std::string> Graph::get_endpoints(int edge_id) {
+    if (!edge_info.contains(edge_id)) {
+        return std::unexpected("Edge " + std::to_string(edge_id) + " does not exist.");
+    }
+    return Graph::end_points{edge_info[edge_id]["source"], edge_info[edge_id]["target"]};
+}
+
+std::expected<void, std::string> Graph::add_vertex(int vertex_id) {
+    if (vertex_ids.contains(vertex_id)) {
+        return std::unexpected("Vertex " + std::to_string(vertex_id) + " already exists.");
     }
 
     vertex_ids.insert(vertex_id);
     out_edges[vertex_id];
     in_edges[vertex_id];
+
+    return {};
 }
 
-void Graph::add_edge(int edge_id, int source_vertex_id, int target_vertex_id, int cost) {
-    auto edge_it = edge_ids.find(edge_id);
-    if (edge_it != edge_ids.end()) {
-        throw std::invalid_argument("Edge " + std::to_string(edge_id) + " already exists.");
+std::expected<void, std::string> Graph::add_edge(int edge_id, int source_vertex_id, int target_vertex_id, int cost) {
+    if (edge_ids.contains(edge_id)) {
+        return std::unexpected("Edge " + std::to_string(edge_id) + " already exists.");
     }
-    auto source_it = vertex_ids.find(source_vertex_id);
-    if (source_it == vertex_ids.end()) {
-        throw std::invalid_argument("Source vertex " + std::to_string(source_vertex_id) + " does not exist.");
+    if (!vertex_ids.contains(source_vertex_id)) {
+        return std::unexpected("Source vertex " + std::to_string(source_vertex_id) + " does not exist.");
     }
-    auto target_it = vertex_ids.find(target_vertex_id);
-    if (target_it == vertex_ids.end()) {
-        throw std::invalid_argument("Target vertex " + std::to_string(source_vertex_id) + " does not exist.");
+    if (!vertex_ids.contains(target_vertex_id)) {
+        return std::unexpected("Target vertex " + std::to_string(target_vertex_id) + " does not exist.");
     }
 
     edge_ids.insert(edge_id);
@@ -94,4 +110,5 @@ void Graph::add_edge(int edge_id, int source_vertex_id, int target_vertex_id, in
         {"target", target_vertex_id},
         {"cost", cost},
     };
+    return {};
 }

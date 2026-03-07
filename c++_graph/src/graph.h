@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <string>
 #include <utility>
+#include <expected>
 
 
 class VertexIterator
@@ -45,24 +46,25 @@ public:
     Graph() = default;
 
     size_t vertex_count() const;
-    int get_in_degree(int vertex_id);
-    int get_out_degree(int vertex_id);
+    std::expected<int, std::string> get_in_degree(int vertex_id);
+    std::expected<int, std::string> get_out_degree(int vertex_id);
     VertexIterator vertex_iterator_begin() const;
     VertexIterator vertex_iterator_end() const;
 
-    int get_edge(int source_vertex_id, int target_vertex_id);
-    end_points get_endpoints(int edge_id);
-    EdgeIterator ingoing_edge_iterator_begin(int vertex_id);
-    EdgeIterator ingoing_edge_iterator_end(int vertex_id);
-    EdgeIterator outgoing_edge_iterator_begin(int vertex_id);
-    EdgeIterator outgoing_edge_iterator_end(int vertex_id);
-    int get_edge_cost(int edge_id);
-    void set_edge_cost(int edge_id, int cost);
-    void add_edge(int edge_id, int source_vertex_id, int target_vertex_id, int cost);
-    void remove_edge(int edge_id);
-    void add_vertex(int vertex_id);
-    void remove_vertex(int vertex_id);
+    std::expected<int, std::string> get_edge(int source_vertex_id, int target_vertex_id);
+    std::expected<end_points, std::string> get_endpoints(int edge_id);
+    std::expected<EdgeIterator, std::string> ingoing_edge_iterator_begin(int vertex_id);
+    std::expected<EdgeIterator, std::string> ingoing_edge_iterator_end(int vertex_id);
+    std::expected<EdgeIterator, std::string> outgoing_edge_iterator_begin(int vertex_id);
+    std::expected<EdgeIterator, std::string> outgoing_edge_iterator_end(int vertex_id);
+    std::expected<int, std::string> get_edge_cost(int edge_id);
+    std::expected<void, std::string> set_edge_cost(int edge_id, int cost);
+    std::expected<void, std::string> add_edge(int edge_id, int source_vertex_id, int target_vertex_id, int cost);
+    std::expected<void, std::string> remove_edge(int edge_id);
+    std::expected<void, std::string> add_vertex(int vertex_id);
+
+    std::expected<void, std::string> remove_vertex(int vertex_id);
     void save_graph(file_name f);
-    void load_graph(file_name f);
+    std::expected<void, std::string> load_graph(file_name f);
     void clear_graph();
 };
