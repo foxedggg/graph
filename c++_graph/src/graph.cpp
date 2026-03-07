@@ -1,6 +1,7 @@
 #include "graph.h"
 
-VertexIterator::VertexIterator(std::set<int>::const_iterator it) {
+// Vertex iterator
+VertexIterator::VertexIterator(std::unordered_set<int>::const_iterator it) {
     this->it = it;
 }
 
@@ -16,6 +17,26 @@ VertexIterator& VertexIterator::operator++() {
 bool VertexIterator::operator!=(const VertexIterator& other) const {
     return it != other.it;
 }
+
+// Edge iterator
+EdgeIterator::EdgeIterator(std::unordered_map<int, int>::const_iterator it) {
+    this->it = it;
+}
+
+int EdgeIterator::operator*() const {
+    return it->first;
+}
+
+EdgeIterator& EdgeIterator::operator++() {
+    ++it;
+    return *this;
+}
+
+bool EdgeIterator::operator!=(const EdgeIterator& other) const {
+    return it != other.it;
+}
+
+// Graph
 
 size_t Graph::vertex_count() const {
     return vertex_ids.size();
@@ -49,8 +70,8 @@ void Graph::add_vertex(int vertex_id) {
     }
 
     vertex_ids.insert(vertex_id);
-    out_edges[vertex_id] = std::map<int, int>();
-    in_edges[vertex_id] = std::map<int, int>();
+    out_edges[vertex_id];
+    in_edges[vertex_id];
 }
 
 void Graph::add_edge(int edge_id, int source_vertex_id, int target_vertex_id, int cost) {
