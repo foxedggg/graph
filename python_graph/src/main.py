@@ -35,7 +35,8 @@ def print_menu():
     print("8. Load Graph from File")
     print("9. Get Vertex In-Degree")
     print("10. Get Vertex Out-Degree")
-    print("11. Exit")
+    print("11. BFS")
+    print("12. Exit")
     print("=" * 30)
 
 
@@ -44,7 +45,7 @@ def main():
 
     while True:
         print_menu()
-        choice = input("Enter your choice (1-11): ")
+        choice = input("Enter your choice (1-12): ")
 
         if choice == '1':
             try:
@@ -137,6 +138,19 @@ def main():
                 print(f"-> {e}")
 
         elif choice == '11':
+            try:
+                source = int(input("Enter the source vertex ID: "))
+                target = int(input("Enter the target vertex ID: "))
+                path = graph.bfs(source, target)
+                if path is None:
+                    print("No path found")
+                else:
+                    print(path)
+            except ValueError as e:
+                print(f"-> {e}")
+
+
+        elif choice == '12':
             print("Exiting program.")
             break
 

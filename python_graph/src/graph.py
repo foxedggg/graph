@@ -1,3 +1,5 @@
+from collections import deque
+
 class Graph:
     def __init__(self):
         self._vertex_ids = set()
@@ -166,3 +168,36 @@ class Graph:
             new_graph.add_edge(source_vertex_id, target_vertex_id, cost)
 
         return new_graph
+
+    def bfs(self, source_vertex_id, target_vertex_id):
+        if source_vertex_id not in self._vertex_ids:
+            raise ValueError("ERROR: Invalid source vertex id!")
+        if target_vertex_id not in self._vertex_ids:
+            raise ValueError("ERROR: Invalid target vertex id!")
+        visited = {target_vertex_id}
+        queue = deque([target_vertex_id])
+
+        parent = {target_vertex_id: None}
+
+        while len(queue) != 0:
+            vertex_id = queue.pop()
+            if vertex_id == source_vertex_id:
+                break
+            for v in self.ingoing_edge_iterator(vertex_id):
+                if v in visited:
+                    continue
+                parent[v] = vertex_id
+                queue.appendleft(v)
+                visited.add(v)
+
+        if source_vertex_id not in parent:
+            return None
+
+        path = []
+        v = source_vertex_id
+        while v is not None:
+            path.append(v)
+            v = parent[v]
+
+        return path
+
