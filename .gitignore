@@ -48,3 +48,6 @@
 
 # Build dirs
 */*build*
+
+# python
+*/*__pycache__*

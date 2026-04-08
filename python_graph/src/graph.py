@@ -1,13 +1,12 @@
 class Graph:
     def __init__(self):
         self._vertex_ids = set()
-        self._edge_ids = set()
 
-        # Maps vertex_id to a dictionary of {target: edge_id}
+        # Maps vertex_id to a dictionary of {target: cost}
         self._out_edges = {}
-        # Maps vertex_id to a dictionary of {source: edge_id}
+        # Maps vertex_id to a dictionary of {source: cost}
         self._in_edges = {}
-        # Maps edge_id to a dictionary of edge properties: {'source': v1, 'target': v2, 'cost': int}
+        # Maps (source_id, vertex_id) to a cost
         self._edge_info = {}
 
     @property
@@ -15,105 +14,86 @@ class Graph:
         return len(self._vertex_ids)
 
     @property
+    def edge_count(self):
+        return len(self._edge_info)
+
     def vertex_iterator(self):
         return iter(self._vertex_ids)
 
-    def get_edge(self, source_vertex_id: int, target_vertex_id: int) -> int:
-        try:
-            d = self._out_edges[source_vertex_id]
-        except KeyError:
-            raise ValueError("ERROR: Invalid source vertex id!")
+    def edge_info_iterator(self):
+        for (source_vertex_id, target_vertex_id), cost in self._edge_info.items():
+            yield source_vertex_id, target_vertex_id, cost
 
-        try:
-            edge = d[target_vertex_id]
-        except KeyError:
-            raise ValueError("ERROR: Invalid target vertex id!")
-
-        return edge
-
-    def get_id_degree(self, vertex_id: int) -> int:
-        try:
-            return len(self._in_edges[vertex_id])
-        except KeyError:
-            raise ValueError("ERROR: Invalid vertex id!")
-
-    def get_out_degree(self, vertex_id: int) -> int:
-        try:
-            return len(self._out_edges[vertex_id])
-        except KeyError:
-            raise ValueError("ERROR: Invalid vertex id!")
-
-    def ingoing_edge_iterator(self, vertex_id: int):
-        try:
-            d = self._in_edges[vertex_id]
-        except KeyError:
-            raise ValueError("ERROR: Invalid vertex id!")
-
-        return iter(d)
-
-    def outgoing_edge_iterator(self, vertex_id: int):
-        try:
-            d = self._out_edges[vertex_id]
-        except KeyError:
-            raise ValueError("ERROR: Invalid vertex id!")
-
-        return iter(d)
-
-    def get_endpoints(self, edge_id) -> tuple[int, int]:
-        try:
-            d = self._edge_info[edge_id]
-        except KeyError:
-            raise ValueError("ERROR: Invalid edge id!")
-
-        return d["source"], d["target"]
-
-    def get_edge_cost(self, edge_id: int) -> int:
-        try:
-            d = self._edge_info[edge_id]
-        except KeyError:
-            raise ValueError("ERROR: Invalid edge id!")
-
-        return d['cost']
-
-    def set_edge_cost(self, edge_id: int, new_cost: int) -> None:
-        try:
-            d = self._edge_info[edge_id]
-        except KeyError:
-            raise ValueError("ERROR: Invalid edge id!")
-
-        d['cost'] = new_cost
-
-    def add_edge(self, edge_id: int, source_vertex_id: int, target_vertex_id: int, cost: int) -> None:
-        # if source_vertex_id == target_vertex_id:
-        #     raise ValueError("ERROR: Source vertex id and target vertex id cannot be the same!")
-        if edge_id in self._edge_ids:
-            raise ValueError("ERROR: Invalid edge id!")
+    def get_edge_cost(self, source_vertex_id: int, target_vertex_id: int) -> int:
         if source_vertex_id not in self._vertex_ids:
             raise ValueError("ERROR: Invalid source vertex id!")
         if target_vertex_id not in self._vertex_ids:
             raise ValueError("ERROR: Invalid target vertex id!")
 
-        self._edge_info[edge_id] = {'source': source_vertex_id, 'target': target_vertex_id, 'cost': cost}
-        self._out_edges[source_vertex_id][target_vertex_id] = edge_id
-        self._in_edges[target_vertex_id][source_vertex_id] = edge_id
-        self._edge_ids.add(edge_id)
+        if (source_vertex_id, target_vertex_id) not in self._edge_info:
+            raise ValueError("ERROR: Edge doesn't exist")
 
-    def remove_edge(self, edge_id) -> None:
-        try:
-            target = self._edge_info[edge_id]['target']
-            source = self._edge_info[edge_id]['source']
+        return self._edge_info[(source_vertex_id, target_vertex_id)]
 
-            del self._out_edges[source][target]
-            del self._in_edges[target][source]
-            del self._edge_info[edge_id]
-            self._edge_ids.remove(edge_id)
+    def get_id_degree(self, vertex_id: int) -> int:
+        if vertex_id not in self._vertex_ids:
+            raise ValueError("ERROR: Invalid vertex id!")
+        return len(self._in_edges[vertex_id])
 
-        except KeyError:
-            raise ValueError("ERROR: Invalid edge id!")
+    def get_out_degree(self, vertex_id: int) -> int:
+        if vertex_id not in self._vertex_ids:
+            raise ValueError("ERROR: Invalid vertex id!")
+        return len(self._out_edges[vertex_id])
+
+    def ingoing_edge_iterator(self, vertex_id: int):
+        if vertex_id not in self._vertex_ids:
+            raise ValueError("ERROR: Invalid vertex id!")
+        return iter(self._in_edges[vertex_id])
+
+    def outgoing_edge_iterator(self, vertex_id: int):
+        if vertex_id not in self._vertex_ids:
+            raise ValueError("ERROR: Invalid vertex id!")
+        return iter(self._out_edges[vertex_id])
+
+    def set_edge_cost(self, source_vertex_id, target_vertex_id, new_cost: int) -> None:
+        if source_vertex_id not in self._vertex_ids:
+            raise ValueError("ERROR: Invalid source vertex id!")
+        if target_vertex_id not in self._vertex_ids:
+            raise ValueError("ERROR: Invalid target vertex id!")
+        if (source_vertex_id, target_vertex_id) not in self._edge_info:
+            raise ValueError("ERROR: Edge doesn't exist")
+
+        self._edge_info[(source_vertex_id, target_vertex_id)] = new_cost
+
+    def add_edge(self, source_vertex_id: int, target_vertex_id: int, cost: int) -> None:
+        if source_vertex_id not in self._vertex_ids:
+            raise ValueError("ERROR: Invalid source vertex id!")
+        if target_vertex_id not in self._vertex_ids:
+            raise ValueError("ERROR: Invalid target vertex id!")
+        if (source_vertex_id, target_vertex_id) in self._edge_info:
+            raise ValueError("ERROR: Edge already exist")
+
+        self._out_edges[source_vertex_id][target_vertex_id] = cost
+        self._in_edges[target_vertex_id][source_vertex_id] = cost
+
+        self._edge_info[(source_vertex_id, target_vertex_id)] = cost
+
+    def remove_edge(self, source_vertex_id, target_vertex_id) -> None:
+        if source_vertex_id not in self._vertex_ids:
+            raise ValueError("ERROR: Invalid source vertex id!")
+        if target_vertex_id not in self._vertex_ids:
+            raise ValueError("ERROR: Invalid target vertex id!")
+        if (source_vertex_id, target_vertex_id) not in self._edge_info:
+            raise ValueError("ERROR: Edge doesn't exist")
+
+        del self._out_edges[source_vertex_id][target_vertex_id]
+        del self._in_edges[target_vertex_id][source_vertex_id]
+
+        del self._edge_info[(source_vertex_id, target_vertex_id)]
 
     def add_vertex(self, vertex_id: int):
         if vertex_id in self._vertex_ids:
-            raise ValueError("ERROR: Invalid vertex id!")
+            raise ValueError("ERROR: Vertex already exist")
 
         self._vertex_ids.add(vertex_id)
         self._out_edges[vertex_id] = dict()
@@ -121,18 +101,15 @@ class Graph:
 
     def remove_vertex(self, vertex_id: int):
         if vertex_id not in self._vertex_ids:
-            raise ValueError("ERROR: Invalid vertex id!")
+            raise ValueError("ERROR: Vertex doesn't exist")
 
-        for v_id, edge_id in self._in_edges[vertex_id].items():
+        for v_id in self._in_edges[vertex_id]:
             del self._out_edges[v_id][vertex_id]
-            del self._edge_info[edge_id]
-            self._edge_ids.remove(edge_id)
+            del self._edge_info[(v_id, vertex_id)]
 
-
-        for v_id, edge_id in self._out_edges[vertex_id].items():
+        for v_id in self._out_edges[vertex_id]:
             del self._in_edges[v_id][vertex_id]
-            del self._edge_info[edge_id]
-            self._edge_ids.remove(edge_id)
+            del self._edge_info[(vertex_id, v_id)]
 
         del self._out_edges[vertex_id]
         del self._in_edges[vertex_id]
@@ -140,16 +117,12 @@ class Graph:
         self._vertex_ids.remove(vertex_id)
 
     def save_graph(self, file_name: str):
-        v_map = {x: y for y, x in enumerate(self._vertex_ids)}
-        lines = [f"{self.vertex_count} {len(self._edge_ids)}\n"]
-        for vertex in self.vertex_iterator:
-            for edge_id in self._out_edges[vertex].values():
-                source = v_map[self._edge_info[edge_id]['source']]
-                target = v_map[self._edge_info[edge_id]['target']]
-                cost = self._edge_info[edge_id]['cost']
-                lines.append(f"{source} {target} {cost}\n")
+        lines = [f"{self.vertex_count} {len(self._edge_info)}\n"]
+        for (source_vertex_id, target_vertex_id), cost in self._edge_info.items():
+            lines.append(f"{source_vertex_id} {target_vertex_id} {cost}\n")
         with open(file_name, 'w') as f:
             f.writelines(lines)
+
 
     def load_graph(self, file_name: str):
         try:
@@ -160,20 +133,36 @@ class Graph:
             raise FileNotFoundError(f"File {file_name} is not found")
 
         self.clear_graph()
-        header_parts = header.split()
 
-        for i in range(int(header_parts[0])):
-            self.add_vertex(i)
-
-        for index, line in enumerate(lines):
+        for line in lines:
             parts = line.split()
-            self.add_edge(index, int(parts[0]), int(parts[1]), int(parts[2]))
+            if parts[0] not in self._vertex_ids:
+                self.add_vertex(int(parts[0]))
+            if parts[1] not in self._vertex_ids:
+                self.add_vertex(int(parts[1]))
+
+            self.add_edge(int(parts[0]), int(parts[1]), int(parts[2]))
+
+        header_parts = header.split()
+        if int(header_parts[0]) != len(self._vertex_ids):
+            raise ValueError("ERROR: Couldn't load right number of vertexes")
+        if int(header_parts[1]) != len(self._edge_info):
+            raise ValueError("ERROR: Couldn't load right number of edges")
 
     def clear_graph(self):
         self._vertex_ids = set()
-        self._edge_ids = set()
         self._out_edges = {}
         self._in_edges = {}
         self._edge_info = {}
 
 
+    def copy(self):
+        new_graph = Graph()
+
+        for vertex_id in self.vertex_iterator():
+            new_graph.add_vertex(vertex_id)
+
+        for (source_vertex_id, target_vertex_id), cost in self._edge_info.items():
+            new_graph.add_edge(source_vertex_id, target_vertex_id, cost)
+
+        return new_graph
