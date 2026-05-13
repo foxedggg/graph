@@ -372,3 +372,25 @@ class Graph:
             return total_walks
 
         return dfs(source_vertex_id)
+
+    def topological_sort(self):
+        sorted = list()
+        q = deque()
+        count = dict()
+        for vertex in self.vertex_iterator():
+            count[vertex] = self.get_id_degree(vertex)
+            if count[vertex] == 0:
+                q.append(vertex)
+
+        while len(q) != 0:
+            v = q.popleft()
+            sorted.append(v)
+            for vertex in self.outgoing_edge_iterator(v):
+                count[vertex] -= 1
+                if count[vertex] == 0:
+                    q.append(vertex)
+
+        if len(sorted) < self.vertex_count:
+            sorted = None
+
+        return sorted

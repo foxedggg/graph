@@ -148,15 +148,192 @@ def print_menu():
     print("13. Count Min Cost Walks (No Neg Cycle)")
     print("14. Count Distinct Walks in DAG")
     print("15. Solve Bridge & Torch Problem")
-    print("16. Exit")
+    print("16. Lab 4")
+    print("17. Exit")
     print("=" * 35)
+
+def lab4():
+    filename = input("Filename: ")
+    try:
+        with open(filename, "r") as f:
+            lines = f.readlines()
+    except FileNotFoundError:
+        print("Error: file not found!")
+        return
+
+    graph = Graph()
+
+    tasks = dict()
+    counter = 0
+
+    for line in lines:
+        line = line.strip()
+        parts = line.split(';')
+        task = parts[0]
+        cost = int(parts[1])
+        requirements = parts[2].split(',')
+
+        if task in tasks:
+            print(f"task {task} already exists")
+            return
+
+        tasks[task] = (counter, cost)
+        counter += 1
+
+        graph.add_vertex(tasks[task][0])
+
+        if len(requirements) == 1 and requirements[0] == "-":
+            continue
+
+        for requirement in requirements:
+            if requirement not in tasks:
+                print(f"task {task} doesn't exist")
+                return
+            graph.add_edge(tasks[requirement][0], tasks[task][0], 0)
+
+    print(f"\n--- Graph Details ---")
+    print(f"Total vertices: {graph.vertex_count}")
+    print(f"Total edges: {graph.edge_count}")
+    print(f"Vertices: {list(graph.vertex_iterator())}")
+    print("Edges:")
+    edge_count = 0
+    for s, t, c in graph.edge_info_iterator():
+        print(f"  {s} -> {t} (Cost: {c})")
+        edge_count += 1
+    if edge_count == 0:
+        print("  No edges in the graph.")
+
+    l = graph.topological_sort()
+    print(l)
+
+def lab42():
+    filename = input("Filename: ")
+    try:
+        with open(filename, "r") as f:
+            lines = f.readlines()
+    except FileNotFoundError:
+        print("Error: file not found!")
+        return
+
+    graph = Graph()
+
+    tasks = dict()  # Maps task name to (vertex_id, duration)
+    id_to_task = dict()  # Maps vertex_id back to task name
+    counter = 0
+
+    # First pass: Load all tasks as vertices so they exist regardless of file order
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        parts = line.split(';')
+        task = parts[0]
+        duration = int(parts[1])
+
+        if task in tasks:
+            print(f"Error: task {task} already exists")
+            return
+
+        tasks[task] = (counter, duration)
+        id_to_task[counter] = task
+        graph.add_vertex(counter)
+        counter += 1
+
+    # Second pass: Connect edges based on prerequisites
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        parts = line.split(';')
+        task = parts[0]
+        requirements = parts[2].split(',')
+
+        if len(requirements) == 1 and requirements[0] == "-":
+            continue
+
+        for requirement in requirements:
+            if requirement not in tasks:
+                print(f"Error: task {task} requires {requirement} which doesn't exist.")
+                return
+            # Add directed edge from prerequisite to dependent task
+            graph.add_edge(tasks[requirement][0], tasks[task][0], 0)
+
+    # 1. Verify DAG and obtain Topological Sort (using predecessor counters)
+    sorted_vertices = graph.topological_sort()
+
+    if sorted_vertices is None:
+        print("\nThe graph is NOT a DAG! There is a circular dependency among activities.")
+        return
+
+    print("\nThe graph is a DAG.")
+    topo_names = [id_to_task[v] for v in sorted_vertices]
+    print(f"Topological sorting: {', '.join(topo_names)}")
+
+    # 2. Compute Earliest Starting Time (EST) and Earliest Finish Time (EFT)
+    # This must be processed in topological order
+    EST = {}
+    EFT = {}
+
+    for v in sorted_vertices:
+        duration = tasks[id_to_task[v]][1]
+        max_pred_eft = 0
+
+        # A task cannot start until ALL its prerequisites have finished
+        for pred in graph.ingoing_edge_iterator(v):
+            if EFT[pred] > max_pred_eft:
+                max_pred_eft = EFT[pred]
+
+        EST[v] = max_pred_eft
+        EFT[v] = EST[v] + duration
+
+    # The total project time is the maximum of all Earliest Finish Times
+    total_time = max(EFT.values()) if EFT else 0
+
+    # 3. Compute Latest Finish Time (LFT) and Latest Starting Time (LST)
+    # This must be processed in REVERSE topological order
+    LFT = {v: total_time for v in sorted_vertices}
+    LST = {v: 0 for v in sorted_vertices}
+
+    for v in reversed(sorted_vertices):
+        duration = tasks[id_to_task[v]][1]
+        min_succ_lst = total_time
+        has_succ = False
+
+        # A task must finish before ANY of its dependents start
+        for succ in graph.outgoing_edge_iterator(v):
+            has_succ = True
+            if LST[succ] < min_succ_lst:
+                min_succ_lst = LST[succ]
+
+        if has_succ:
+            LFT[v] = min_succ_lst
+
+        LST[v] = LFT[v] - duration
+
+    # 4. Print results and locate critical paths
+    print("\nActivity | Duration | EST | LST")
+    print("-" * 35)
+    critical_activities = []
+
+    for v in sorted_vertices:
+        task_name = id_to_task[v]
+        duration = tasks[task_name][1]
+
+        print(f"{task_name:<8} | {duration:<8} | {EST[v]:<3} | {LST[v]:<3}")
+
+        # An activity is critical if its EST == LST (it has zero slack/float time)
+        if EST[v] == LST[v]:
+            critical_activities.append(task_name)
+
+    print(f"\nTotal time of the project: {total_time}")
+    print(f"Critical activities: {', '.join(critical_activities)}")
 
 
 def main():
     graph = Graph()
     while True:
         print_menu()
-        choice = input("Enter your choice (1-16): ")
+        choice = input("Enter your choice (1-17): ")
         if choice == '1':
             try:
                 v_id = int(input("Enter the new vertex ID: "))
@@ -288,6 +465,8 @@ def main():
         elif choice == '15':
             solve_bridge_and_torch()
         elif choice == '16':
+            lab42()
+        elif choice == '17':
             print("Exiting program.")
             break
         else:
